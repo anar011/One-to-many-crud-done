@@ -157,6 +157,7 @@ namespace ClassPractic.Areas.Admin.Controllers
 
 
 
+
         private async Task<SelectList> GetAuthorsAsync()
         {
             IEnumerable<CourseAuthor> authors = await _authorService.GetAll();    // submit-etdikden sonra reflesh- etdikde category silinmemesi ucun 
@@ -173,23 +174,215 @@ namespace ClassPractic.Areas.Admin.Controllers
     
         public async Task<IActionResult> Delete(int? id)
         {
-            Course course = await _courseService.GetFullDataById((int)id);
 
-            foreach (var item in course.CourseImages)
+            try
             {
 
-                string path = FileHelper.GetFilePath(_env.WebRootPath, "img", item.Image);
+                Course course = await _courseService.GetFullDataById((int)id);
 
-                FileHelper.DeleteFile(path);
+                foreach (var item in course.CourseImages)
+                {
+
+                    string path = FileHelper.GetFilePath(_env.WebRootPath, "img", item.Image);
+
+                    FileHelper.DeleteFile(path);
+                }
+
+
+                _context.Courses.Remove(course);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception)
+            {
+
+                throw;
             }
 
-
-            _context.Courses.Remove(course);
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
         }
 
 
+
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteProductImage(int? id)
+        {
+            try
+            {
+                if (id == null) return BadRequest();
+
+                bool result = false;
+
+                CourseImage courseImage = await _context.CourseImages.Where(m => m.Id == id).FirstOrDefaultAsync();
+
+                if (courseImage == null) return NotFound();
+
+                var data = await _context.Courses.Include(m => m.CourseImages).FirstOrDefaultAsync(m => m.Id == courseImage.CourseId);
+
+                if (data.CourseImages.Count > 1)
+                {
+                    string path = FileHelper.GetFilePath(_env.WebRootPath, "img", courseImage.Image);
+
+                    FileHelper.DeleteFile(path);
+
+                    _context.CourseImages.Remove(courseImage);
+
+                    await _context.SaveChangesAsync();
+
+                    result = true;
+                }
+
+                data.CourseImages.FirstOrDefault().IsMain = true;
+
+                await _context.SaveChangesAsync();
+
+                return Ok(result);
+
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+
+
+
+
+          
+        }
+
+
+
+
+
+
+
+
+
+        [HttpGet]
+        public async Task<IActionResult> Edit(int? id)
+        {
+            try
+            {
+                if (id == null) return BadRequest();
+
+                ViewBag.authors = await GetAuthorsAsync();
+
+                Course dbCourse = await _courseService.GetFullDataById((int)id);
+
+                if (dbCourse == null) return NotFound();
+
+
+                CourseEditVM model = new()
+                {
+                    Id = dbCourse.Id,
+                    Name = dbCourse.Name,
+                    Sales = dbCourse.Sales,
+                    Price = dbCourse.Price.ToString("0.#####"),
+                    CourseAuthorId = dbCourse.CourseAuthorId,
+                    Images = dbCourse.CourseImages.ToList(),
+                    Description = dbCourse.Description
+                };
+
+
+                return View(model);
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+        }
+
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int? id, CourseEditVM updatedCourse)
+        {
+            try
+            {
+                if (id == null) return BadRequest();
+
+                ViewBag.authors = await GetAuthorsAsync();
+
+                Course dbCourse = await _context.Courses.AsNoTracking().Include(m => m.CourseImages).Include(m => m.CourseAuthor).FirstOrDefaultAsync(m => m.Id == id);
+
+                if (dbCourse == null) return NotFound();
+
+                if (!ModelState.IsValid)
+                {
+                    updatedCourse.Images = dbCourse.CourseImages.ToList();
+                    return View(updatedCourse);
+                }
+
+                List<CourseImage> courseImages = new();
+
+                if (updatedCourse.Photos is not null)
+                {
+                    foreach (var photo in updatedCourse.Photos)
+                    {
+                        if (!photo.CheckFileType("image/"))
+                        {
+                            ModelState.AddModelError("Photo", "File type must be image");
+                            updatedCourse.Images = dbCourse.CourseImages.ToList();
+                            return View(updatedCourse);
+                        }
+
+                        if (!photo.CheckFileSize(200))
+                        {
+                            ModelState.AddModelError("Photo", "Image size must be max 200kb");
+                            updatedCourse.Images = dbCourse.CourseImages.ToList();
+                            return View(updatedCourse);
+                        }
+                    }
+
+
+
+                    foreach (var photo in updatedCourse.Photos)
+                    {
+                        string fileName = Guid.NewGuid().ToString() + "_" + photo.FileName;
+
+                        string path = FileHelper.GetFilePath(_env.WebRootPath, "images", fileName);
+
+                        await FileHelper.SaveFileAsync(path, photo);
+
+                        CourseImage productImage = new()
+                        {
+                            Image = fileName
+                        };
+
+                        courseImages.Add(productImage);
+                    }
+
+                    await _context.CourseImages.AddRangeAsync(courseImages);
+                }
+
+                decimal convertedPrice = decimal.Parse(updatedCourse.Price.Replace(".", ","));
+
+                Course newCourse = new()
+                {
+                    Id = dbCourse.Id,
+                    Name = updatedCourse.Name,
+                    Price = convertedPrice,
+                    Sales = updatedCourse.Sales,
+                    Description = updatedCourse.Description,
+                    CourseAuthorId = updatedCourse.CourseAuthorId,
+                    CourseImages = courseImages.Count == 0 ? dbCourse.CourseImages : courseImages
+                };
+
+
+                _context.Courses.Update(newCourse);
+
+                await _context.SaveChangesAsync();
+
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+        }
 
     }
 }
