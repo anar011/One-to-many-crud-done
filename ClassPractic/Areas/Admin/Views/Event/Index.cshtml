@@ -1,0 +1,62 @@
+﻿@model IEnumerable<Event>
+@{
+    ViewData["Title"] = "Index";
+}
+
+
+<div class="container">
+    <h1>Slider</h1>
+                      <div class="table-responsive">
+                    <table class="table table-striped">
+                      <thead>
+                        <tr>
+
+                           <th>
+                            Name
+                          </th>
+
+                          <th>
+                            Date
+                          </th>
+                         
+                          <th>
+                           Operations
+                          </th>
+
+                        </tr>
+                      </thead>
+                      <tbody>
+                       <a class="btn btn-outline-info" asp-action="Create" style="float:right;">Create </a>
+                        @foreach (var item in Model)
+                        {
+                             <tr>
+                                 <td class="py-1">
+                            @item.Name
+                          </td>
+
+
+                          <td class="py-1">
+                            @item.Date
+                          </td>
+                          <td>
+                              
+                             
+                          </td>
+                          <td>
+
+                              <a class="btn btn-outline-info" asp-action="Detail" asp-route-id="@item.Id">Info</a>
+                              <a class="btn btn-outline-primary">Edit</a>
+                              <a class="btn btn-outline-danger">Delete</a>
+ 
+                          </td>
+
+                        </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+</div>
+

@@ -1,0 +1,74 @@
+﻿@model News
+@{
+    ViewData["Title"] = "Detail";
+}
+
+
+<div class="container">
+    <h1>News Detail</h1>
+
+    @*<div class="slider-content">
+        <img src="~/images/@Model.Image" />
+    </div>*@
+
+     <div class="table-responsive">
+                    <table class="table table-striped">
+                      <thead>
+                        <tr>
+                          <th>
+                            Image
+                          </th>
+
+                           <th>
+                            Question
+                          </th>
+                          <th>
+                           Date
+                          </th>
+
+                           <th>
+                          Name
+                          </th>
+
+
+                        </tr>
+                      </thead>
+                      <tbody>
+                       <a class="btn btn-outline-info" style="float:right;">Create </a>
+                        
+                        
+                             <tr>
+                          <td class="py-1">
+                            <img src="~/images/@Model.Image" style="width:70px ; height:70px;" />
+                          </td>
+
+                           <td>
+                            
+                              @Model.Question
+                          
+                             
+                          </td>
+                          <td>
+                            
+                              @Model.Date.ToString("MM dd yyyy")
+                          
+                             
+                          </td>
+
+                          <td>
+                            
+                              @Model.NewsAuthor?.AuthorName
+                          
+                             
+                          </td>
+                         
+
+                        </tr>
+                        
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+</div>

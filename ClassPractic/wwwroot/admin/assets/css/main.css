@@ -1,0 +1,23 @@
+﻿.active-status{
+    width:15px;
+    height:15px;
+    background-color:greenyellow;
+    border-radius:50%;
+}
+
+.deActive-status {
+    width: 15px;
+    height: 15px;
+    background-color: red;
+    border-radius: 50%;
+}
+
+.slider-content{
+    width:500px;
+    height:300px;
+
+}
+
+.slider-content img {
+    width: 100%;
+}
